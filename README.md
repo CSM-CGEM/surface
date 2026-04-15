@@ -16,10 +16,10 @@ better size, but the trim it back down to the desired size (i.e. there is no '-Q
 option).
 
 Also you can configure how this algorithm prunes the data for you. By default
-(consistent with gmt surface) it only keeps the data value that is closest to a node.
-Alternatively, you can have it choose the mean, median, or mode value of all data
-values in that nodes area instead (corresponding to performing a `blockmean`,
-`blockmedian`, or `blockmode` data reduction with gmt).
+(consistent with `gmt surface`) it only keeps the data value that is closest to a node.
+Alternatively, you can have it choose the mean or median value of all data
+values in that nodes area instead (corresponding to performing a `blockmean` or
+`blockmedian` data reduction with `gmt`).
 
 # GMT Source
 The original GMT surface code can be found at the

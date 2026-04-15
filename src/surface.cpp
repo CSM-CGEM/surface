@@ -245,7 +245,7 @@ namespace surface
         CLOSEST = 0,
         MEAN = 1,
         MEDIAN = 2,
-        MODE = 3,
+        // MODE = 3,
     };
 
     enum class IterMode
@@ -549,7 +549,7 @@ namespace surface
     }
 
     /* thunk arg is last argument to compare function */
-    struct surface_compare_points
+    struct compare_points
     {
         SurfaceInfo *info;
 
@@ -627,7 +627,7 @@ namespace surface
         }
 
         // sort the SURFACE_OUTSIDE points to the end
-        std::sort(C.points.begin(), C.points.end(), surface_compare_points{&C});
+        std::sort(C.points.begin(), C.points.end(), compare_points{&C});
         C.points_sub = std::span<const Data>(C.points.begin(), C.points.size() - k_skipped);
     }
 
@@ -1228,7 +1228,7 @@ namespace surface
 
         /* Sort the data  */
 
-        std::sort(C.points.begin(), C.points.end(), surface_compare_points{&C});
+        std::sort(C.points.begin(), C.points.end(), compare_points{&C});
 
         /* If more than one datum is indexed to the same node, only the first should be kept.
            Mark the additional ones as SURFACE_OUTSIDE.
@@ -1314,35 +1314,35 @@ namespace surface
                             }
                             else // Mode
                             {
-                                auto best = index_points[0];
-                                size_t best_count = 1;
+                                // auto best = index_points[0];
+                                // size_t best_count = 1;
 
-                                auto current = index_points[0];
-                                size_t count = 1;
+                                // auto current = index_points[0];
+                                // size_t count = 1;
 
-                                for (size_t i = 1; i < n_pts; ++i)
-                                {
-                                    if (index_points[i]->z == current->z)
-                                    {
-                                        count++;
-                                    }
-                                    else
-                                    {
-                                        if (count > best_count)
-                                        {
-                                            best = current;
-                                            best_count = count;
-                                        }
-                                        current = index_points[i];
-                                        count = 1;
-                                    }
-                                }
+                                // for (size_t i = 1; i < n_pts; ++i)
+                                // {
+                                //     if (index_points[i]->z == current->z)
+                                //     {
+                                //         count++;
+                                //     }
+                                //     else
+                                //     {
+                                //         if (count > best_count)
+                                //         {
+                                //             best = current;
+                                //             best_count = count;
+                                //         }
+                                //         current = index_points[i];
+                                //         count = 1;
+                                //     }
+                                // }
 
-                                if (count > best_count)
-                                    best = current;
-                                new_x = best->x;
-                                new_y = best->y;
-                                new_z = best->z;
+                                // if (count > best_count)
+                                //     best = current;
+                                // new_x = best->x;
+                                // new_y = best->y;
+                                // new_z = best->z;
                             }
 
                             auto p_first = index_points.front();
@@ -1363,8 +1363,8 @@ namespace surface
         if (n_outside)
         { /* Sort again; this time the SURFACE_OUTSIDE points will be sorted to end of the array */
 
-            // QSORT_R(C.points, C.npoints, sizeof(struct SURFACE_DATA), surface_compare_points, &(C.info));
-            std::sort(C.points.begin(), C.points.end(), surface_compare_points{&C});
+            // QSORT_R(C.points, C.npoints, sizeof(struct SURFACE_DATA), compare_points, &(C.info));
+            std::sort(C.points.begin(), C.points.end(), compare_points{&C});
             // C.npoints -= n_outside;                   /* Effectively chopping off the eliminated points */
             C.points.resize(C.points.size() - n_outside); // gmt_M_memory(GMT, C.points, C.npoints, struct SURFACE_DATA); /* Adjust memory accordingly */
             if (C.verbosity > 1)
@@ -1893,7 +1893,7 @@ namespace surface
         }
     }
 
-    int surface(
+    void surface(
         double *x, double *y, double *z, size_t n_nodes,
         double xmin, double xmax, double ymin, double ymax, size_t nx, size_t ny,
         double *output,
@@ -1992,7 +1992,7 @@ namespace surface
         { /* Data lie exactly on a plane; write a grid with the plane and exit */ /* Get a grid of zeros... */
             surface_restore_planar_trend(C, G);
             store_grid(C, G, output, nx, ny);
-            return (0); /* Clean up and return */
+            return;
         }
 
         load_constraints(C, G.header, lower, n_lower, upper, n_upper, nx, ny);
@@ -2043,8 +2043,6 @@ namespace surface
         surface_restore_planar_trend(C, G); /* Restore the least-square plane we removed earlier */
 
         store_grid(C, G, output, nx, ny);
-
-        return 0;
     }
 }
 
@@ -2072,11 +2070,19 @@ extern "C"
         double b_tens = std::min(std::max(0.0, b_tension), 1.0);
         double i_tens = std::min(std::max(0.0, i_tension), 1.0);
         double cnvg = (converge_limit <= 0.0) ? SURFACE_CONV_LIMIT : converge_limit;
-        auto d_mode = surface::DownsampleMode{std::min(std::max(downsample_mode, 0U), 3U)};
-        auto cnvg_mode = surface::ConvergenceLimitMode{std::min(std::max(converge_mode, 0U), 1U)};
+        auto d_mode = surface::DownsampleMode{std::min(downsample_mode, 2U)};
+        auto cnvg_mode = surface::ConvergenceLimitMode{std::min(converge_mode, 1U)};
 
-        surface::surface(
-            x, y, z, n, xmin, xmax, ymin, ymax, nx, ny, output,
-            d_mode, max_iters, rlx, alph, b_tens, i_tens, cnvg, cnvg_mode, verbosity, lower, n_lower, upper, n_upper);
+        try
+        {
+            surface::surface(
+                x, y, z, n, xmin, xmax, ymin, ymax, nx, ny, output,
+                d_mode, max_iters, rlx, alph, b_tens, i_tens, cnvg, cnvg_mode, verbosity, lower, n_lower, upper, n_upper);
+        }
+        catch (std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            std::exit(1);
+        }
     }
 }
