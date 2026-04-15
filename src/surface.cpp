@@ -1763,9 +1763,9 @@ namespace surface
         // if ny != C.current_ny - 1, then it was padded to a slightly larger size for convergence.
         // (and same for nx).
         // these should be the shift in row and column coordinates from the start
-        size_t nx0 = (C.current_nx - 1 - nx) / 2;
-        size_t ny0 = (C.current_ny - 1 - ny + 1) / 2; // +1 because extra padding is at the end of y
-        for (size_t iy = 0, iy_g = ny0 + 1; iy < ny; ++iy, ++iy_g)
+        size_t nx0 = (C.current_nx - nx) / 2;
+        size_t ny0 = (C.current_ny - ny + 1) / 2; // +1 because extra padding is at the end of y
+        for (size_t iy = 0, iy_g = ny0; iy < ny; ++iy, ++iy_g)
         {
             size_t ig = C.node_nw_corner + iy_g * C.current_mx + nx0;
             for (size_t ix = 0; ix < nx; ++ix, ++ig) // columns
@@ -1793,8 +1793,8 @@ namespace surface
         /* Load lower/upper limits, verify range, deplane, and rescale */
         // initializes lower and upper bound vectors to nan, incase there is any padding from added
         // cells for convergence acceleration.
-        size_t nx0 = (C.n_columns - 1 - nx) / 2;
-        size_t ny0 = (C.n_rows - 1 - ny) / 2;
+        size_t nx0 = (C.current_nx - nx) / 2;
+        size_t ny0 = (C.current_ny - ny + 1) / 2; // +1 because extra padding is at the end of y
         if (n_lower > 0)
         {
             C.lower_bound.resize(C.mxmy, std::numeric_limits<double>::quiet_NaN());
@@ -1807,7 +1807,7 @@ namespace surface
                     std::cout << "Your lower bound is larger than the minimum data value." << std::endl;
                 }
 
-                for (size_t iy = 0, iy_g = ny0 + 2; iy < ny; ++iy, ++iy_g) // rows
+                for (size_t iy = 0, iy_g = ny0; iy < ny; ++iy, ++iy_g) // rows
                 {
                     size_t ig = C.node_nw_corner + iy_g * C.current_mx + nx0;
                     for (size_t ix = 0; ix < nx; ++ix, ++ig) // columns
@@ -1818,7 +1818,7 @@ namespace surface
             }
             else
             {
-                for (size_t iy = 0, iy_g = ny0 + 2; iy < ny; ++iy, ++iy_g) // rows
+                for (size_t iy = 0, iy_g = ny0; iy < ny; ++iy, ++iy_g) // rows
                 {
                     size_t ig = C.node_nw_corner + iy_g * C.current_mx + nx0;
                     for (size_t ix = 0; ix < nx; ++ix, ++ig) // columns
@@ -1856,7 +1856,7 @@ namespace surface
                     std::cout << "Your upper bound is less than the maximum data value." << std::endl;
                 }
 
-                for (size_t iy = 0, iy_g = ny0 + 2; iy < ny; ++iy, ++iy_g) // rows
+                for (size_t iy = 0, iy_g = ny0; iy < ny; ++iy, ++iy_g) // rows
                 {
                     size_t ig = C.node_nw_corner + iy_g * C.current_mx + nx0;
                     for (size_t ix = 0; ix < nx; ++ix, ++ig) // columns
@@ -1867,7 +1867,7 @@ namespace surface
             }
             else
             {
-                for (size_t iy = 0, iy_g = ny0 + 2; iy < ny; ++iy, ++iy_g) // rows
+                for (size_t iy = 0, iy_g = ny0; iy < ny; ++iy, ++iy_g) // rows
                 {
                     size_t ig = C.node_nw_corner + iy_g * C.current_mx + nx0;
                     for (size_t ix = 0; ix < nx; ++ix, ++ig) // columns
@@ -1919,8 +1919,10 @@ namespace surface
             output[i] = 0.0;
         }
         /* Determine if there is a better region that would allow more intermediate resolutions to converge better */
-        G.header.n_columns = nx + 1;
-        G.header.n_rows = ny + 1;
+        G.header.n_columns = nx;
+        G.header.n_rows = ny;
+        double dx = (xmax - xmin) / (nx - 1);
+        double dy = (ymax - ymin) / (ny - 1);
 
         G.header.wesn[XLO] = xmin;
         G.header.wesn[XHI] = xmax;
@@ -1931,8 +1933,8 @@ namespace surface
         G.header.pad[XHI] = 2;
         G.header.pad[YLO] = 2;
         G.header.pad[YHI] = 2;
-        G.header.inc[GMT_X] = (xmax - xmin) / nx;
-        G.header.inc[GMT_Y] = (ymax - ymin) / ny;
+        G.header.inc[GMT_X] = dx;
+        G.header.inc[GMT_Y] = dy;
 
         // increase padding a bit to make sure it's all good.
         suggest_sizes(C, G.header);
