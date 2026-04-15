@@ -279,7 +279,7 @@ namespace surface
         std::vector<Data> points;           /* All the data constraints */
         std::span<const Data> points_sub;   /* Subset of data for current grid size*/
         DownsampleMode downsample_mode;     /* Method used to downsample data if multiple points fall in the same grid cell. */
-        std::vector<Briggs> Briggs;         /* Array with Briggs 6-coefficients per nearest active data constraint */
+        std::vector<Briggs> brgs_coefs;     /* Array with Briggs 6-coefficients per nearest active data constraint */
         std::vector<size_t> factors;        /* Array of these common factors */
         size_t max_iterations;              /* Max iterations per call to iterate */
         ConvergenceLimitMode converge_mode; /* BY_PERCENT if -C set fractional convergence limit [BY_VALUE] */
@@ -769,7 +769,7 @@ namespace surface
                             yy = -dy;
                         }
                     }
-                    auto &b = C.Briggs[briggs_index].b; /* Reference to the Briggs coefficients for this data point */
+                    auto &b = C.brgs_coefs[briggs_index].b; /* Reference to the Briggs coefficients for this data point */
                     /* Evaluate the Briggs coefficients */
                     solve_Briggs_coefficients(C, b, xx, yy, pt.z);
                     briggs_index++;
@@ -1006,7 +1006,7 @@ namespace surface
                     }
                     if (set == CONSTRAINED)
                     {                                                                    /* Solution is (A-7) and modifications depend on which quadrant the point lies in */
-                        auto &b = C.Briggs[briggs_index].b;                              /* Shorthand to this node's Briggs b-array */
+                        auto &b = C.brgs_coefs[briggs_index].b;                          /* Shorthand to this node's Briggs b-array */
                         unsigned int quadrant = static_cast<unsigned int>(status[node]); /* Which quadrant did the point fall in? */
                         for (k = 0, sum_bk_uk = 0.0; k < 4; k++)
                         { /* Sum over b[k]*u[k] for nodes A-D in Fig A-1 */
@@ -2016,7 +2016,7 @@ namespace surface
 
         /* Now the data are ready to go for the first iteration.  */
 
-        C.Briggs.resize(C.points.size());
+        C.brgs_coefs.resize(C.points.size());
 
         set_coefficients(C); /* Initialize the coefficients needed in the finite-difference expressions */
 
