@@ -20,6 +20,7 @@ surface_lib = library(
     cpp_static_args: '-DSURFACE_STATIC',
     cpp_shared_args: '-DSURFACE_BUILD_DYNAMIC',
     gnu_symbol_visibility: 'hidden',
+    install: get_option('install'),
 )
 
 dep_args = []
